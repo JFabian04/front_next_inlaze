@@ -1,101 +1,200 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import axiosInstance from './utils/axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { processValidationErrors } from './utils/validationError';
+
+const LoginPage = () => {
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [errors, setErrors] = useState<any>({});
+  const router = useRouter();
+
+  // Cambiar entre Login y registro. Limpia errores de validacion
+  const changeForm = (isRegistering: boolean) => {
+    setIsRegistering(isRegistering);
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setErrors({});
+  };
+
+  //metodo para Login, redirige a dashboard
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await axiosInstance.post<{ token: string }>('/auth/login', {
+        email,
+        password,
+      });
+
+      localStorage.setItem('token', response.data.token);
+
+      router.push('/dashboard');
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        setErrors({ general: err.response.data.message });
+      } else {
+        setErrors({ general: 'Error al iniciar sesión. Inténtalo nuevamente.' });
+      }
+    }
+  };
+
+  //Metodo para registrar usuario. Muestra toast
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (password !== confirmPassword) {
+      setErrors({ confirmPassword: 'Las contraseñas no coinciden.' });
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post('/users', {
+        email,
+        password,
+      });
+
+      toast.success(response.data.message || '¡Registro exitoso!');
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setErrors({});
+
+      setIsRegistering(false);
+    } catch (err: any) {
+      if (err.response?.data?.errors) {
+        const validationErrors = processValidationErrors(err.response.data.errors);
+        setErrors(validationErrors);
+      } else {
+        setErrors({ general: 'Error al registrarse. Inténtalo nuevamente.' });
+        toast.error(errors.general || 'Error al registrarse. Inténtalo nuevamente.');
+      }
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <section className="bg-gray-50 dark:bg-gray-300">
+      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto h-screen lg:py-0">
+        <div className="shadow-lg bg-gray-100/50 rounded p-2 flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
+          <img
+            className="w-full h-16"
+            src="/images/inlaze_cover.jpg"
+            alt="logo"
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+          <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
+            <h1 className="text-xl text-center font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+              {isRegistering ? 'Crear una cuenta' : 'Iniciar Sesión'}
+            </h1>
+            <form
+              className="space-y-4 md:space-y-6"
+              onSubmit={isRegistering ? handleRegister : handleLogin}
+            >
+              <div>
+                <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Correo Electrónico
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  placeholder="example@email.com"
+                  required
+                />
+                {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>} { }
+              </div>
+              <div>
+                <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  placeholder="••••••••"
+                  required
+                />
+                {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>} { }
+              </div>
+
+              {isRegistering && (
+                <div>
+                  <label htmlFor="confirmPassword" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                    Confirmar Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    placeholder="••••••••"
+                    required
+                  />
+                  {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>} { }
+                </div>
+              )}
+
+              <div className="h-3">
+                {errors.general && <p className="text-red-500 text-sm">{errors.general}</p>}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full text-white bg-yellow-600 hover:bg-yellow-600/80 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+              >
+                {isRegistering ? 'Crear cuenta' : 'Iniciar sesión'}
+              </button>
+
+              <p className="text-sm font-light text-gray-500 dark:text-gray-400">
+                {isRegistering ? (
+                  <>
+                    ¿Ya tienes una cuenta?{' '}
+                    <button
+                      onClick={() => changeForm(false)}
+                      className="font-medium text-primary-600 hover:underline dark:text-primary-500"
+                    >
+                      Iniciar sesión
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    ¿No tienes una cuenta?{' '}
+                    <button
+                      onClick={() => changeForm(true)}
+                      className="font-medium text-primary-600 hover:underline dark:text-primary-500"
+                    >
+                      Regístrate
+                    </button>
+                  </>
+                )}
+              </p>
+            </form>
+          </div>
+        </div>
+
+
+      </div>
+
+      <ToastContainer />
+    </section>
   );
-}
+
+};
+
+export default LoginPage;
