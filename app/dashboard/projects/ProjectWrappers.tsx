@@ -31,8 +31,8 @@ const ProjectWrapper: FC<ParamsFilter> = ({
     }, [search, page, limit, sortField, sortOrder]);
 
     // Función para recargar la tabla después de crear o editar
-    const handleSuccess = async () => {
-        await fetchProjects();
+    const handleSuccess = () => {
+         fetchProjects();
     };
 
     return (

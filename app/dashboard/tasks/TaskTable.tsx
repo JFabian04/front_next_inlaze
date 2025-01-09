@@ -11,6 +11,7 @@ import ColumnHeader from '@/app/components/HeaderSort';
 import DeleteAlert from '../DeleteAlert';
 import { FormattedTaskTable } from '@/app/types/task';
 import { deleteTask } from '@/app/services/taskService';
+import { useRouter } from 'next/navigation';
 
 
 const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuccess: () => void }) => {
@@ -21,10 +22,16 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
     const [nameItem, setNameItem] = useState<string | null>(null);
+    const router = useRouter();
 
     // Data para la tabla
-    const initialData = data !== null ? data.data : [];
+    const initialData = data ? data.data : [];
     const currentItems = initialData;
+
+    if (!Array.isArray(currentItems)) {
+            router.push('/dashboard/projects')
+    }
+
 
     // Modal dinámico (actualizar/registrar)
     const openModalForCreate = () => {
@@ -115,12 +122,16 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDatefunc(item.updated_at)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span
-                                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold leading-5 ${item.status
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-gray-100 text-gray-800'
+                                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold leading-5 ${item.status === 'por hacer'
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : item.status === 'en progreso'
+                                                ? 'bg-blue-100 text-blue-800'
+                                                : item.status === 'completada'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                             }`}
                                     >
-                                        {item.status ? 'Activo' : 'Inactivo'}
+                                        {item.status}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

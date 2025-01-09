@@ -7,6 +7,8 @@ import { FormattedTaskTable } from "@/app/types/task";
 import { getTasks } from "@/app/services/taskService";
 
 const TaskWrappers: FC<ParamsFilter> = ({
+    id,
+    ud,
     search,
     page,
     limit,
@@ -18,21 +20,23 @@ const TaskWrappers: FC<ParamsFilter> = ({
     // Obtener registros
     const fetchProjects = async () => {
         try {
-            const data = await getTasks({ search, page, limit, sortField, sortOrder });
+            
+            const data = await getTasks({ id, ud, search, page, limit, sortField, sortOrder });
             setProjects(data);
         } catch (error) {
             console.error("Error al obtener los regitros:", error);
         }
     };
-
-
+    
+    
     useEffect(() => {
         fetchProjects();
-    }, [search, page, limit, sortField, sortOrder]);
+        console.log('WRAPER: ', ud);
+    }, [id, ud,search, page, limit, sortField, sortOrder]);
 
     // Función para recargar la tabla después de crear o editar
-    const handleSuccess = async () => {
-        await fetchProjects();
+    const handleSuccess = () => {
+        fetchProjects();
     };
 
     return (

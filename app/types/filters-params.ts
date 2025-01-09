@@ -4,4 +4,6 @@ export interface ParamsFilter {
     limit?: string | '';
     sortField?: string | '';
     sortOrder?: string | 'DESC';
+    id?: string;
+    ud?: string;
 }

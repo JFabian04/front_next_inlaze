@@ -5,7 +5,7 @@ export interface Task {
     date_limit?: Date;
     created_at?: Date;
     updated_at?: Date;
-    status?: boolean;
+    status?: string;
   }
   
   

@@ -1,7 +1,7 @@
 import { differenceInDays, isBefore, isEqual } from 'date-fns';
 
 export function formatDatefunc(dateBd: Date | undefined) {
-    console.log('Date: ', dateBd);
+    // console.log('Date: ', dateBd);
 
     if (dateBd != undefined) {
         const dateString = dateBd.toString();
@@ -11,7 +11,7 @@ export function formatDatefunc(dateBd: Date | undefined) {
             const split = dateString.split('T');
             date = split[0].toString();
         }
-        console.log('xd---',date);
+        // console.log('xd---',date);
         const [año, mes, dia] = date.split('-')
         return `${dia}/${mes}/${año}`
     }
