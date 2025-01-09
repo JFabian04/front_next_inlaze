@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import Router from 'next/router';
+import { redirect } from 'next/navigation';
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -32,8 +32,7 @@ axiosInstance.interceptors.response.use(
 
       if (status === 401) {
         console.error('Token inválido o expirado. Redirigiendo al login...');
-        Router.push('/');
-
+        redirect('/');
       } else if (status === 404) {
         console.error('Recurso no encontrado.');
       } else if (status >= 500) {
