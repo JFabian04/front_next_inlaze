@@ -149,7 +149,7 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
                                     id="date_limit"
                                     value={formData.date_limit || ''}
                                     onChange={handleChange}
-                                    min={new Date().toISOString().split('T')[0]} // Limita la fecha a hoy o fechas futuras
+                                    min={new Date().toISOString().split('T')[0]}
                                 />
                                 {errors.date_limit && <p className="text-red-500 text-sm">{errors.date_limit}</p>}
                                 <span className={`${dateLimitRange?.color}`}>{dateLimitRange?.message}</span>

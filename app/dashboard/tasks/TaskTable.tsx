@@ -9,7 +9,6 @@ import PaginationTable from '@/app/components/PaginationTable';
 import SearchInput from '@/app/components/SearchInput';
 import ColumnHeader from '@/app/components/HeaderSort';
 import DeleteAlert from '../DeleteAlert';
-import { deleteProject } from '@/app/services/projectService';
 import { FormattedTaskTable } from '@/app/types/task';
 import { deleteTask } from '@/app/services/taskService';
 
