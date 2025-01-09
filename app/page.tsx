@@ -29,15 +29,18 @@ const LoginPage = () => {
     e.preventDefault();
 
     try {
-      const response = await axiosInstance.post<{ token: string }>('/auth/login', {
+      const response = await axiosInstance.post<{ data: any }>('/auth/login', {
         email,
         password,
       });
 
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('token', response.data.data.accessToken);
+      localStorage.setItem('userId', response.data.data.payload.userId);
+      
 
-      router.push('/dashboard');
+      // router.push('/dashboard');
     } catch (err: any) {
+      
       if (err.response?.data?.message) {
         setErrors({ general: err.response.data.message });
       } else {
