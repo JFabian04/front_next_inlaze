@@ -9,9 +9,9 @@ import LimitSelector from '@/app/components/LimitTable';
 import PaginationTable from '@/app/components/PaginationTable';
 import SearchInput from '@/app/components/SearchInput';
 import ColumnHeader from '@/app/components/HeaderSort';
-import DeleteAlert from '../DeleteAlert';
+import DeleteAlert from '../../components/DeleteAlert';
 import { deleteProject } from '@/app/services/projectService';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 
 
@@ -27,8 +27,10 @@ const ProjecTable = ({ data, onSuccess }: { data: FormattedProjectTable | null, 
     // Data para la tabla
     const initialData = data !== null ? data.data : [];
     const currentItems = initialData;
-    
+
     const router = useRouter();
+    const searchParams = useSearchParams();
+
 
     // Modal dinámico (actualizar/registrar)
     const openModalForCreate = () => {
@@ -75,14 +77,19 @@ const ProjecTable = ({ data, onSuccess }: { data: FormattedProjectTable | null, 
     //Función para redirigir a las atreas con su param url
     const showTasks = (id: string | undefined) => {
         if (id) {
-            const userId = localStorage.getItem('userId') 
-            // Construye la nueva URL con los parámetros deseados
-            const params = new URLSearchParams();
-            params.set('id', id);
-            params.set('ud', '1');
+            const userId = localStorage.getItem('userId')
+            if (userId) {
+                const params = new URLSearchParams();
 
-            // Reemplaza la ruta actual con la nueva ruta
-            router.replace(`/dashboard/tasks?${params.toString()}`);
+                //Guardar los filtros actualues de projecto en el local storage
+                const paramsProject = new URLSearchParams(searchParams);
+                localStorage.setItem('projectFilters', paramsProject.toString());
+
+                params.set('id', id);
+                params.set('ud', userId?.toString());
+
+                router.replace(`/dashboard/tasks?${params.toString()}`);
+            }
         }
     }
 
@@ -90,16 +97,16 @@ const ProjecTable = ({ data, onSuccess }: { data: FormattedProjectTable | null, 
         <div className="space-y-4">
             <div className="flex items-center justify-between space-x-2">
                 {/* Buscador */}
-                <div className='w-80'>
+                <div className='w-80 shadow-md'>
                     <SearchInput placeholder="Buscar..." />
                 </div>
 
                 {/* Botón de registrar */}
                 <button
-                    className="flex gap-3 items-center h-10 px-3 py-1 text-white bg-blue-500 hover:bg-yellow-600 rounded-md text-sm"
+                    className="flex gap-3 items-center h-10 px-3 py-1 text-white bg-blue-600 hover:bg-blue-500 rounded-md text-sm shadow-lg"
                     onClick={() => openModalForCreate()}
                 >
-                    <p className="hidden md:block">Registrar Proyecto</p>
+                    <p className="hidden md:block ">Registrar Proyecto</p>
 
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
                         <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
@@ -108,7 +115,7 @@ const ProjecTable = ({ data, onSuccess }: { data: FormattedProjectTable | null, 
             </div>
 
             {/* Tabla */}
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -143,7 +150,7 @@ const ProjecTable = ({ data, onSuccess }: { data: FormattedProjectTable | null, 
                                     <div className="flex items-center justify-between gap-5 px-5 py-2 shadow bg-gray-200/50 rounded-full">
                                         {/* Botón de Actualizar */}
                                         <button
-                                            className="shadow px-3 py-1 text-blue-500 bg-blue-100 hover:bg-blue-200 rounded-md text-sm"
+                                            className="shadow px-3 py-1 text-blue-500 bg-blue-100 hover:bg-blue-200 rounded-md text-sm" title='Editar'
                                             onClick={() => openModalForEdit(item)}
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
@@ -152,7 +159,7 @@ const ProjecTable = ({ data, onSuccess }: { data: FormattedProjectTable | null, 
                                         </button>
                                         {/* Botón de ver Tareas */}
                                         <button
-                                            className="shadow px-3 py-1 text-green-500 bg-green-100 hover:bg-green-200 rounded-md text-sm"
+                                            className="shadow px-3 py-1 text-green-500 bg-green-100 hover:bg-green-200 rounded-md text-sm" title='Ver tareas'
                                             onClick={() => showTasks(item.id)}
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
@@ -162,7 +169,7 @@ const ProjecTable = ({ data, onSuccess }: { data: FormattedProjectTable | null, 
 
                                         {/* Botón de eliminar */}
                                         <button
-                                            className="px-3 py-1 text-red-500 shadow bg-red-100 hover:bg-red-200 rounded-md text-sm"
+                                            className="px-3 py-1 text-red-500 shadow bg-red-100 hover:bg-red-200 rounded-md text-sm" title='Eliminar'
                                             onClick={() => handleDelete(Number(item.id), item.name)}
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
@@ -193,7 +200,7 @@ const ProjecTable = ({ data, onSuccess }: { data: FormattedProjectTable | null, 
                 onSuccess={handleModalSuccess}
             />
 
-            {/* Alerta ocnfimiarcion elminar */}
+            {/* Alerta confimiarcion elminar */}
             <DeleteAlert
                 isOpen={isDeleteModalOpen}
                 onResult={handleResult}

@@ -6,6 +6,8 @@ export interface Task {
     created_at?: Date;
     updated_at?: Date;
     status?: string;
+    users?: [];
+    project?: string;
   }
   
   

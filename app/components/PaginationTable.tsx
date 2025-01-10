@@ -31,7 +31,7 @@ const PaginationTable: React.FC<PaginationProps> = ({ totalRecords }) => {
             <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
                 Anterior
             </button>
@@ -41,8 +41,8 @@ const PaginationTable: React.FC<PaginationProps> = ({ totalRecords }) => {
                     <button
                         key={index}
                         onClick={() => handlePageChange(index + 1)}
-                        className={`px-3 py-1 rounded-md ${currentPage === index + 1
-                            ? 'bg-blue-500 text-white'
+                        className={`px-3 py-1 rounded-md shadow-lg ${currentPage === index + 1
+                            ? 'bg-blue-600 text-white'
                             : 'bg-gray-100 hover:bg-gray-200'}`}
                     >
                         {index + 1}
@@ -52,7 +52,7 @@ const PaginationTable: React.FC<PaginationProps> = ({ totalRecords }) => {
             <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
                 Siguiente
             </button>

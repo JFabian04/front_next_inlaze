@@ -1,17 +1,18 @@
 "use client"
 
 import { formatDatefunc } from '@/app/utils/formatDate';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import ModalForm from './ModalForm';
 import LimitSelector from '@/app/components/LimitTable';
 import PaginationTable from '@/app/components/PaginationTable';
 import SearchInput from '@/app/components/SearchInput';
 import ColumnHeader from '@/app/components/HeaderSort';
-import DeleteAlert from '../DeleteAlert';
+import DeleteAlert from '../../components/DeleteAlert';
 import { FormattedTaskTable, Task } from '@/app/types/task';
 import { deleteTask } from '@/app/services/taskService';
-import { useRouter } from 'next/navigation';
+import { useRouter as useRouterApp, useSearchParams } from 'next/navigation';
+
 import ListComment from '../comments/ListComment';
 
 
@@ -23,18 +24,40 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
     const [nameItem, setNameItem] = useState<string | null>(null);
-    
+
     const [selectedItemComment, setSelectedItemComment] = useState<Task | null>(null);
-    const router = useRouter();
+    const [userId, setUserId] = useState<string | null>(null);
+
+    const searchParams = useSearchParams();
+    const routerApp = useRouterApp();
+
+    // Obtener userId solo en el cliente
+    useEffect(() => {
+        const storedUserId = localStorage.getItem('userId');
+        setUserId(storedUserId);
+    }, []);
 
     // Data para la tabla
     const initialData = data ? data.data : [];
     const currentItems = initialData;
 
-    if (!Array.isArray(currentItems)) {
-        router.push('/dashboard/projects')
-    }
+    const params = new URLSearchParams(searchParams);
 
+    // Validar que el is del usario sea igual al de la autenticacion
+    useEffect(() => {
+        if (userId && params.get('ud') !== userId) {
+            routerApp.push('/dashboard/projects');
+        }
+        if (!Array.isArray(currentItems)) {
+            routerApp.push('/dashboard/projects');
+        }
+    }, [params, userId, currentItems, routerApp]);
+
+    //Boton para redirecionar a los proeyctos
+    const handleGoBack = () => {
+        const projectFilters = localStorage.getItem('projectFilters');
+        routerApp.push(`/dashboard/projects?${projectFilters}`);
+    };
 
     // Modal dinámico (actualizar/registrar)
     const openModalForCreate = () => {
@@ -78,25 +101,32 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
         }
     };
 
-    //Función para setear el Id del task y pasarlo al ListComment
-    const setTaskId = (item: Task) => {
-        setSelectedItemComment(item);
-    };
 
     const closeChat = () => {
-        setSelectedItemComment(null); // Cerrar el chat al poner el ID en null
+        setSelectedItemComment(null); 
     };
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between space-x-2">
-                {/* Buscador */}
-                <div className='w-80'>
-                    <SearchInput placeholder="Buscar..." />
+                <div className='flex gap-3'>
+                    {/* Volver atras boton */}
+                    <button
+                        className="flex gap-3 items-center h-10 px-3 py-1 text-white bg-blue-600 hover:bg-blue-500 rounded-md text-sm shadow-lg"
+                        onClick={() => handleGoBack()}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                            <path fillRule="evenodd" d="M9.53 2.47a.75.75 0 0 1 0 1.06L4.81 8.25H15a6.75 6.75 0 0 1 0 13.5h-3a.75.75 0 0 1 0-1.5h3a5.25 5.25 0 1 0 0-10.5H4.81l4.72 4.72a.75.75 0 1 1-1.06 1.06l-6-6a.75.75 0 0 1 0-1.06l6-6a.75.75 0 0 1 1.06 0Z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+
+                    {/* Buscador */}
+                    <div className='w-80 shadow-md'>
+                        <SearchInput placeholder="Buscar..." />
+                    </div>
                 </div>
 
                 {/* Botón de registrar */}
                 <button
-                    className="flex gap-3 items-center h-10 px-3 py-1 text-white bg-blue-500 hover:bg-yellow-600 rounded-md text-sm"
+                    className="flex gap-3 items-center h-10 px-3 py-1 text-white bg-blue-600 hover:bg-blue-500 rounded-md text-sm shadow-lg"
                     onClick={() => openModalForCreate()}
                 >
                     <p className="hidden md:block">Registrar Tarea</p>
@@ -108,7 +138,7 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
             </div>
 
             {/* Tabla */}
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -162,8 +192,10 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
                                             onClick={() => setSelectedItemComment(item)}
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                                                <path d="M11.25 5.337c0-.355-.186-.676-.401-.959a1.647 1.647 0 0 1-.349-1.003c0-1.036 1.007-1.875 2.25-1.875S15 2.34 15 3.375c0 .369-.128.713-.349 1.003-.215.283-.401.604-.401.959 0 .332.278.598.61.578 1.91-.114 3.79-.342 5.632-.676a.75.75 0 0 1 .878.645 49.17 49.17 0 0 1 .376 5.452.657.657 0 0 1-.66.664c-.354 0-.675-.186-.958-.401a1.647 1.647 0 0 0-1.003-.349c-1.035 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401.31 0 .557.262.534.571a48.774 48.774 0 0 1-.595 4.845.75.75 0 0 1-.61.61c-1.82.317-3.673.533-5.555.642a.58.58 0 0 1-.611-.581c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.035-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959a.641.641 0 0 1-.658.643 49.118 49.118 0 0 1-4.708-.36.75.75 0 0 1-.645-.878c.293-1.614.504-3.257.629-4.924A.53.53 0 0 0 5.337 15c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.036 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.369 0 .713.128 1.003.349.283.215.604.401.959.401a.656.656 0 0 0 .659-.663 47.703 47.703 0 0 0-.31-4.82.75.75 0 0 1 .83-.832c1.343.155 2.703.254 4.077.294a.64.64 0 0 0 .657-.642Z" />
+                                                <path d="M4.913 2.658c2.075-.27 4.19-.408 6.337-.408 2.147 0 4.262.139 6.337.408 1.922.25 3.291 1.861 3.405 3.727a4.403 4.403 0 0 0-1.032-.211 50.89 50.89 0 0 0-8.42 0c-2.358.196-4.04 2.19-4.04 4.434v4.286a4.47 4.47 0 0 0 2.433 3.984L7.28 21.53A.75.75 0 0 1 6 21v-4.03a48.527 48.527 0 0 1-1.087-.128C2.905 16.58 1.5 14.833 1.5 12.862V6.638c0-1.97 1.405-3.718 3.413-3.979Z" />
+                                                <path d="M15.75 7.5c-1.376 0-2.739.057-4.086.169C10.124 7.797 9 9.103 9 10.609v4.285c0 1.507 1.128 2.814 2.67 2.94 1.243.102 2.5.157 3.768.165l2.782 2.781a.75.75 0 0 0 1.28-.53v-2.39l.33-.026c1.542-.125 2.67-1.433 2.67-2.94v-4.286c0-1.505-1.125-2.811-2.664-2.94A49.392 49.392 0 0 0 15.75 7.5Z" />
                                             </svg>
+
                                         </button>
 
                                         {/* Botón de eliminar */}

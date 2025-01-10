@@ -34,11 +34,9 @@ const LoginPage = () => {
         password,
       });
 
-      localStorage.setItem('token', response.data.data.accessToken);
       localStorage.setItem('userId', response.data.data.payload.userId);
       
-
-      // router.push('/dashboard');
+      router.push('/dashboard');
     } catch (err: any) {
       
       if (err.response?.data?.message) {
