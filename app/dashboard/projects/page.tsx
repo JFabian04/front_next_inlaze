@@ -2,7 +2,6 @@
 import { Metadata } from 'next';
 import { FC } from 'react';
 import ProjectWrapper from './ProjectWrappers';
-
 export const metadata: Metadata = {
     title: 'Proyectos',
 };
@@ -12,6 +11,7 @@ interface InvoicesProps {
 }
 
 const Projects: FC<InvoicesProps> = async ({ searchParams }) => {
+
     const params = await searchParams;
 
     return (

@@ -6,19 +6,15 @@ const axiosInstance: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true
+  withCredentials: true, // Asegúrate de enviar las cookies con cada solicitud
 });
 
 // Interceptor para solicitudes
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-    if (token) {
-      config.headers = config.headers || {};
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
+    // No es necesario hacer nada con las cabeceras de autorización aquí,
+    // ya que las cookies se enviarán automáticamente con withCredentials: true.
+    console.log('Enviando solicitud con cookies...');
     return config;
   },
   (error) => Promise.reject(error)
@@ -37,7 +33,7 @@ axiosInstance.interceptors.response.use(
       } else if (status === 404) {
         console.error('Recurso no encontrado.');
       } else if (status >= 500) {
-        console.error('Error del servidor.');
+        console.error('Error del servidor: ', error.response);
       }
     } else if (error.request) {
       console.error('No se recibió respuesta del servidor.');

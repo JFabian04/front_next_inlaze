@@ -14,6 +14,7 @@ import { deleteTask } from '@/app/services/taskService';
 import { useRouter as useRouterApp, useSearchParams } from 'next/navigation';
 
 import ListComment from '../comments/ListComment';
+import { authValidate } from '@/app/services/userService';
 
 
 const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuccess: () => void }) => {
@@ -27,6 +28,7 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
 
     const [selectedItemComment, setSelectedItemComment] = useState<Task | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
+    const [authData, setAuthData] = useState<any>();
 
     const searchParams = useSearchParams();
     const routerApp = useRouterApp();
@@ -35,6 +37,17 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
     useEffect(() => {
         const storedUserId = localStorage.getItem('userId');
         setUserId(storedUserId);
+
+        const validateAuth = async () => {
+            const auth = await authValidate();
+            if (auth.satus == 'error') {
+                routerApp.push('/')
+            }
+            console.log('AUTH DATA: ', auth);
+
+            setAuthData(auth.data)
+        }
+        validateAuth()
     }, []);
 
     // Data para la tabla
@@ -51,6 +64,7 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
         if (!Array.isArray(currentItems)) {
             routerApp.push('/dashboard/projects');
         }
+
     }, [params, userId, currentItems, routerApp]);
 
     //Boton para redirecionar a los proeyctos
@@ -67,6 +81,8 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
     };
 
     const openModalForEdit = (item: any) => {
+        console.log('ITEM SELECTED: ', item);
+
         setModalAction('edit');
         setSelectedItem(item);
         setIsModalOpen(true);
@@ -103,7 +119,7 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
 
 
     const closeChat = () => {
-        setSelectedItemComment(null); 
+        setSelectedItemComment(null);
     };
     return (
         <div className="space-y-4">
@@ -125,16 +141,16 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
                 </div>
 
                 {/* Botón de registrar */}
-                <button
-                    className="flex gap-3 items-center h-10 px-3 py-1 text-white bg-blue-600 hover:bg-blue-500 rounded-md text-sm shadow-lg"
-                    onClick={() => openModalForCreate()}
-                >
-                    <p className="hidden md:block">Registrar Tarea</p>
+                {authData && authData.rol === 'admin' && (
+                    < button
+                        className="flex gap-3 items-center h-10 px-3 py-1 text-white bg-blue-600 hover:bg-blue-500 rounded-md text-sm shadow-lg" onClick={() => openModalForCreate()}>
+                        <p className="hidden md:block">Registrar Tarea</p>
 
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                        <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
-                    </svg>
-                </button>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                            <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
+                        </svg>
+                    </button>
+                )}
             </div>
 
             {/* Tabla */}
@@ -176,16 +192,19 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    <div className="flex items-center justify-between gap-5 px-5 py-2 shadow bg-gray-200/50 rounded-full">
+                                    <div className={`flex items-center gap-5 px-5 py-2 shadow bg-gray-200/50 rounded-full ${authData.rol === 'admin' ? 'justify-between' : 'justify-center'}`}>
                                         {/* Botón de Actualizar */}
-                                        <button
-                                            className="shadow px-3 py-1 text-blue-500 bg-blue-100 hover:bg-blue-200 rounded-md text-sm"
-                                            onClick={() => openModalForEdit(item)}
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                                                <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z" />
-                                            </svg>
-                                        </button>
+                                        {authData && authData.rol === 'admin' && (
+
+                                            <button
+                                                className="shadow px-3 py-1 text-blue-500 bg-blue-100 hover:bg-blue-200 rounded-md text-sm"
+                                                onClick={() => openModalForEdit(item)}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                                                    <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z" />
+                                                </svg>
+                                            </button>
+                                        )}
                                         {/* Botón de ver Tareas */}
                                         <button
                                             className="shadow px-3 py-1 text-green-500 bg-green-100 hover:bg-green-200 rounded-md text-sm"
@@ -199,15 +218,17 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
                                         </button>
 
                                         {/* Botón de eliminar */}
-                                        <button
-                                            className="px-3 py-1 text-red-500 shadow bg-red-100 hover:bg-red-200 rounded-md text-sm"
-                                            onClick={() => handleDelete(Number(item.id), item.title)}
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                                                <path fillRule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z" clipRule="evenodd" />
-                                            </svg>
+                                        {authData && authData.rol === 'admin' && (
+                                            < button
+                                                className="px-3 py-1 text-red-500 shadow bg-red-100 hover:bg-red-200 rounded-md text-sm"
+                                                onClick={() => handleDelete(Number(item.id), item.title)}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                                                    <path fillRule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z" clipRule="evenodd" />
+                                                </svg>
 
-                                        </button>
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
@@ -240,11 +261,13 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
             />
 
             {/* Modulo comentarios */}
-            {selectedItemComment && (
-                <ListComment task={selectedItemComment} onClose={closeChat} />
-            )}
+            {
+                selectedItemComment && (
+                    <ListComment task={selectedItemComment} onClose={closeChat} />
+                )
+            }
 
-        </div>
+        </div >
     );
 };
 

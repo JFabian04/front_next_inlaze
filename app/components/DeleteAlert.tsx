@@ -1,6 +1,6 @@
 import { Dialog } from '@headlessui/react';
 import { FC } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface ConfirmModalProps {
@@ -62,7 +62,7 @@ const AlertDelete: FC<ConfirmModalProps> = ({ isOpen, onResult, item, onSuccess 
                     </div>
                 </div>
             </Dialog >
-            <ToastContainer />
+
         </>
     );
 };

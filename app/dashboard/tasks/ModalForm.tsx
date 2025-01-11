@@ -5,7 +5,7 @@ import { FC, useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { processValidationErrors } from '@/app/utils/validationError';
-import { createTask, updateTask } from '@/app/services/taskService';
+import { createTask, getTaskById, updateTask } from '@/app/services/taskService';
 import { validateRangeDate } from '@/app/utils/formatDate';
 import { getUsers } from '@/app/services/userService';
 import { useSearchParams } from 'next/navigation';
@@ -33,7 +33,7 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
     const [projectId, setProjectId] = useState<any>();
     const [users, setUsers] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>('');
-
+    const [validDateRange, setvalidDateRange] = useState<any>({});
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -43,15 +43,30 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
 
     // Llenar formulario si es edición
     useEffect(() => {
-        setErrors({});
-        if (action === 'edit' && initialData) {
-            const formattedDate = initialData.date_limit
-                ? new Date(initialData.date_limit).toISOString().split('T')[0]
-                : '';
-            setFormData({ ...initialData, date_limit: formattedDate });
-        } else {
-            setFormData({ title: '', description: '', date_limit: '', users: [], status: 'Por hacer' });
-        }
+        const fetchAndSetData = async () => {
+            setErrors({});
+            if (action === 'edit' && initialData) {
+              try {
+                const {data} = await getTaskById(initialData.id);
+                
+                // Formatea la fecha
+                const formattedDate = initialData.date_limit
+                  ? new Date(initialData.date_limit).toISOString().split('T')[0]
+                  : '';
+                setFormData({ ...data, date_limit: formattedDate });
+        
+                // Valida el rango de fechas
+                const resp = validateRangeDate(formattedDate);
+                setvalidDateRange(resp);
+        
+              } catch (error) {
+                console.error('Error fetching task data: ', error);
+              }
+            } else {
+              setFormData({ title: '', description: '', date_limit: '', users: [] });
+            }
+          };
+          fetchAndSetData();        
     }, [action, initialData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -108,8 +123,8 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
             if (action === 'create') {
                 response = await createTask(formattedData);
             } else if (formData.id) {
-                const {title, description, date_limit, status, users, project} = formattedData; 
-                response = await updateTask(formData.id, {title, description, date_limit, status, users, project});
+                const { title, description, date_limit, status, users, project } = formattedData;
+                response = await updateTask(formData.id, { title, description, date_limit, status, users, project });
             } else {
                 toast.error('Error en la operación. Inténtelo de nuevo.');
                 return;
@@ -171,12 +186,13 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
 
                         {/* Fecha límite */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700">Fecha Límite</label>
+                            <label className="block text-sm font-medium text-gray-700">Fecha Límite <span className={validDateRange ? validDateRange.color : ''}>{validDateRange ? '(' + validDateRange.message + ')' : ''}</span></label>
                             <input
                                 type="date"
                                 name="date_limit"
                                 value={formData.date_limit}
                                 onChange={handleChange}
+                                min={new Date().toISOString().split('T')[0]}
                                 className="mt-2 p-2 w-full border border-gray-300 rounded-md"
                             />
                             {errors.date_limit && <p className="text-red-500 text-sm">{errors.date_limit}</p>}
@@ -209,7 +225,7 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
                                 className="mt-2 p-2 w-full border border-gray-300 rounded-md"
                                 placeholder="Escribe para buscar usuarios..."
                             />
-                            <ul className="mt-2 max-h-40 overflow-y-auto border border-gray-300 rounded-md">
+                            <ul className="mt-1 z-10 absolute w-[calc(100%-50px)] bg-white max-h-40 overflow-y-auto border border-gray-300 rounded-md">
                                 {loading ? (
                                     <li className="p-2 text-gray-500">Cargando...</li>
                                 ) : (
@@ -225,20 +241,24 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
                                 )}
                             </ul>
                         </div>
+                        {errors.users && <p className="text-red-500 text-sm">{errors.users}</p>}
 
                         {/* Usuarios seleccionados */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700">Usuarios Seleccionados</label>
+                        <div className="mb-4 shadow-lg border bg-slate-300 px-3 py-1">
+                            <label className="block text-sm mb-2 font-medium text-gray-700">Usuarios Seleccionados</label>
                             <ul>
                                 {formData.users.map((user: any) => (
-                                    <li key={user.id} className="flex justify-between items-center">
+                                    <li key={user.id} className="bg-gray-50 mb-1 px-2 py-1 rounded-lg flex justify-between items-center">
                                         <span>{user.name}</span>
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveUser(user.id)}
                                             className="text-red-500 ml-2"
                                         >
-                                            Eliminar
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                                                <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                                            </svg>
+
                                         </button>
                                     </li>
                                 ))}
@@ -265,7 +285,6 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
                 </div>
             </div>
 
-            <ToastContainer />
         </Dialog>
     );
 };

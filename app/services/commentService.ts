@@ -8,7 +8,7 @@ const BASE_URL = '/comments';
 export const getComments = async ({
     id = '',
     page = '1',
-    limit = '10',
+    limit = '',
     search = '',
     sortField = 'created_at',
     sortOrder = 'DESC',
@@ -35,7 +35,9 @@ export const getCommentById = async (id: string) => {
 // crear un nuevo registro
 export const createComment = async (data: CommentCreate) => {
     try {
+        
         const response = await axiosInstance.post(BASE_URL, data);
+        console.log('CREATE COMMENT DTA: ', response.data);
         return response.data;
     } catch (error) {
         throw error;
@@ -61,3 +63,4 @@ export const deleteComment = async (id: string) => {
         throw error;
     }
 };
+

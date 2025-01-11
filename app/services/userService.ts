@@ -14,3 +14,13 @@ export const getUsers = async ({
         throw error;
     }
 };
+
+//Servicio para valdaiar autenticacion
+export const authValidate = async () => {
+    try {
+        const resp = await axiosInstance.get('/auth/protected');
+        return resp.data
+    } catch (error) {
+        throw error
+    }
+}
