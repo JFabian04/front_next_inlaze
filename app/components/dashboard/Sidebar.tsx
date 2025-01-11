@@ -4,15 +4,31 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import axiosInstance from "@/app/utils/axios";
+import { useEffect, useState } from "react";
+import { authValidate } from "@/app/services/userService";
 
 const Sidebar: React.FC = () => {
     const router = useRouter();
+    const [authData, setAuthData] = useState<any>();
+
+    useEffect(() => {
+        const validateAuth = async () => {
+            const auth = await authValidate();
+            if (auth.satus == 'error') {
+                router.push('/')
+            }
+            console.log('AUTH DATA: ', auth);
+
+            setAuthData(auth.data)
+        }
+        validateAuth()
+    }, []);
 
     // Cerrar sesión
     const logout = async () => {
-        await axiosInstance.get(process.env.NEXT_PUBLIC_API_URL + '/auth/logout'); 
+        await axiosInstance.get(process.env.NEXT_PUBLIC_API_URL + '/auth/logout');
         localStorage.removeItem("userId");
-        
+
         router.push("/");
     };
 
@@ -25,27 +41,41 @@ const Sidebar: React.FC = () => {
 
     return (
         <aside className="w-64 bg-gray-100 shadow-lg h-full flex flex-col">
-            <div className="h-32 p-4 bg-gray-700 shadow-lg font-bold text-center border-b flex gap-2 justify-center items-center text-yellow-400 text-xl">
-                <span>Dashboard Inlaze</span>
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-6 h-6"
-                >
-                    <path
-                        fillRule="evenodd"
-                        d="M2.25 2.25a.75.75 0 0 0 0 1.5H3v10.5a3 3 0 0 0 3 3h1.21l-1.172 3.513a.75.75 0 0 0 1.424.474l.329-.987h8.418l.33.987a.75.75 0 0 0 1.422-.474l-1.17-3.513H18a3 3 0 0 0 3-3V3.75h.75a.75.75 0 0 0 0-1.5H2.25Zm6.04 16.5.5-1.5h6.42l.5 1.5H8.29Zm7.46-12a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0v-6Zm-3 2.25a.75.75 0 0 0-1.5 0v3.75a.75.75 0 0 0 1.5 0V9Zm-3 2.25a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5Z"
-                        clipRule="evenodd"
-                    />
-                </svg>
+            <div className="flex-col h-32 p-4 bg-gray-700 shadow-lg font-bold text-center border-b flex gap-6 justify-center items-center text-yellow-400 text-xl">
+                <div className="flex justify-center items-center gap-3">
+                    <span>Dashboard Inlaze</span>
+
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="w-6 h-6"
+                    >
+                        <path
+                            fillRule="evenodd"
+                            d="M2.25 2.25a.75.75 0 0 0 0 1.5H3v10.5a3 3 0 0 0 3 3h1.21l-1.172 3.513a.75.75 0 0 0 1.424.474l.329-.987h8.418l.33.987a.75.75 0 0 0 1.422-.474l-1.17-3.513H18a3 3 0 0 0 3-3V3.75h.75a.75.75 0 0 0 0-1.5H2.25Zm6.04 16.5.5-1.5h6.42l.5 1.5H8.29Zm7.46-12a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0v-6Zm-3 2.25a.75.75 0 0 0-1.5 0v3.75a.75.75 0 0 0 1.5 0V9Zm-3 2.25a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5Z"
+                            clipRule="evenodd"
+                        />
+                    </svg>
+
+                </div>
+                <div className="flex justify-center items-center text-white gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                        <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clipRule="evenodd" />
+                    </svg>
+
+                    <label className="capitalize text-white">
+                        {authData?.name?.length > 10 ? `${authData.name.slice(0, 18)}...` : authData?.name || 'Cargando...'}
+                    </label>
+
+                </div>
             </div>
 
             <nav className="mt-4 flex-1 overflow-y-auto">
                 <ul className="flex flex-col gap-3 items-center">
                     {menuItems.map((item) => {
-                        const isActive = pathname === item.path || 
-                                         (item.name === "Proyectos" && (pathname === "/dashboard/projects" || pathname === "/dashboard/tasks"));
+                        const isActive = pathname === item.path ||
+                            (item.name === "Proyectos" && (pathname === "/dashboard/projects" || pathname === "/dashboard/tasks"));
 
                         return (
                             <li key={item.name} className="w-[95%]">

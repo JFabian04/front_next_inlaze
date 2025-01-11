@@ -143,7 +143,7 @@ const ListComment: React.FC<ChatProps> = ({ task, onClose }) => {
             {/* Scrollable container for comments */}
             <div
                 ref={containerRef}
-                className="flex flex-col p-4 bg-gradient-to-b from-green-200 to-blue-200 h-[calc(100%-150px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500/50 scrollbar-track-transparent"
+                className="flex flex-col p-4 bg-gradient-to-b from-green-100 to-blue-100 h-[calc(100%-150px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500/50 scrollbar-track-transparent"
                 onScroll={handleScroll}
             >
                 {comments.map((comment) => (

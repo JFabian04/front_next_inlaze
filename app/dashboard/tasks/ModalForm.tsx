@@ -7,8 +7,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { processValidationErrors } from '@/app/utils/validationError';
 import { createTask, getTaskById, updateTask } from '@/app/services/taskService';
 import { validateRangeDate } from '@/app/utils/formatDate';
-import { getUsers } from '@/app/services/userService';
-import { useSearchParams } from 'next/navigation';
+import { authValidate, getUsers } from '@/app/services/userService';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface ModalProps {
     isOpen: boolean;
@@ -35,10 +35,24 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [validDateRange, setvalidDateRange] = useState<any>({});
     const searchParams = useSearchParams();
+    const [authData, setAuthData] = useState<any>();
+
+    const router = useRouter();
 
     useEffect(() => {
         const projectId = searchParams.get('id');
         setProjectId(projectId);
+
+        const validateAuth = async () => {
+            const auth = await authValidate();
+            if (auth.satus == 'error') {
+                router.push('/')
+            }
+            console.log('AUTH DATA: ', auth);
+
+            setAuthData(auth.data)
+        }
+        validateAuth()
     }, []);
 
     // Llenar formulario si es edición
@@ -46,27 +60,27 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
         const fetchAndSetData = async () => {
             setErrors({});
             if (action === 'edit' && initialData) {
-              try {
-                const {data} = await getTaskById(initialData.id);
-                
-                // Formatea la fecha
-                const formattedDate = initialData.date_limit
-                  ? new Date(initialData.date_limit).toISOString().split('T')[0]
-                  : '';
-                setFormData({ ...data, date_limit: formattedDate });
-        
-                // Valida el rango de fechas
-                const resp = validateRangeDate(formattedDate);
-                setvalidDateRange(resp);
-        
-              } catch (error) {
-                console.error('Error fetching task data: ', error);
-              }
+                try {
+                    const { data } = await getTaskById(initialData.id);
+
+                    // Formatea la fecha
+                    const formattedDate = initialData.date_limit
+                        ? new Date(initialData.date_limit).toISOString().split('T')[0]
+                        : '';
+                    setFormData({ ...data, date_limit: formattedDate });
+
+                    // Valida el rango de fechas
+                    const resp = validateRangeDate(formattedDate);
+                    setvalidDateRange(resp);
+
+                } catch (error) {
+                    console.error('Error fetching task data: ', error);
+                }
             } else {
-              setFormData({ title: '', description: '', date_limit: '', users: [] });
+                setFormData({ title: '', description: '', date_limit: '', users: [] });
             }
-          };
-          fetchAndSetData();        
+        };
+        fetchAndSetData();
     }, [action, initialData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -151,98 +165,105 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
             <div className="fixed inset-0 flex items-center justify-center z-50">
                 <div className="fixed inset-0 bg-black/25" />
                 <div className="relative bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-                    <Dialog.Title className="text-lg font-semibold">
-                        {action === 'create' ? 'Registrar' : 'Editar Registro'}
-                    </Dialog.Title>
+
+                    {authData && authData.rol === 'admin' && (
+                        <Dialog.Title className="text-lg font-semibold">
+                            {action === 'create' ? 'Registrar' : 'Editar Registro'}
+                        </Dialog.Title>
+                    )}
 
                     <form onSubmit={handleSubmit} className="mt-4">
-                        {/* Título */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700">Título</label>
-                            <input
-                                type="text"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                className="mt-2 p-2 w-full border border-gray-300 rounded-md"
-                            />
-                            {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
-                        </div>
+                        {authData && authData.rol === 'admin' && (
 
-                        {/* Descripción */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700">Descripción</label>
-                            <textarea
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                                maxLength={200}
-                                rows={4}
-                                className="mt-2 p-2 w-full border border-gray-300 rounded-md"
-                            />
-                            <div className="text-right text-sm text-gray-500">{formData.description.length}/200 caracteres</div>
-                            {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
-                        </div>
+                            <div>
+                                {/* Título */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700">Título</label>
+                                    <input
+                                        type="text"
+                                        name="title"
+                                        value={formData.title}
+                                        onChange={handleChange}
+                                        className="mt-2 p-2 w-full border border-gray-300 rounded-md"
+                                    />
+                                    {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
+                                </div>
 
-                        {/* Fecha límite */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700">Fecha Límite <span className={validDateRange ? validDateRange.color : ''}>{validDateRange ? '(' + validDateRange.message + ')' : ''}</span></label>
-                            <input
-                                type="date"
-                                name="date_limit"
-                                value={formData.date_limit}
-                                onChange={handleChange}
-                                min={new Date().toISOString().split('T')[0]}
-                                className="mt-2 p-2 w-full border border-gray-300 rounded-md"
-                            />
-                            {errors.date_limit && <p className="text-red-500 text-sm">{errors.date_limit}</p>}
-                        </div>
+                                {/* Descripción */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleChange}
+                                        maxLength={200}
+                                        rows={4}
+                                        className="mt-2 p-2 w-full border border-gray-300 rounded-md"
+                                    />
+                                    <div className="text-right text-sm text-gray-500">{formData.description.length}/200 caracteres</div>
+                                    {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+                                </div>
 
-                        {/* Select de estado (solo en edición) */}
-                        {action === 'edit' && (
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Estado</label>
-                                <select
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleChange}
-                                    className="mt-2 p-2 w-full border border-gray-300 rounded-md"
-                                >
-                                    <option value="por hacer">Por hacer</option>
-                                    <option value="en progreso">En progreso</option>
-                                    <option value="completada">Completada</option>
-                                </select>
+                                {/* Fecha límite */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700">Fecha Límite <span className={validDateRange ? validDateRange.color : ''}>{validDateRange ? '(' + validDateRange.message + ')' : ''}</span></label>
+                                    <input
+                                        type="date"
+                                        name="date_limit"
+                                        value={formData.date_limit}
+                                        onChange={handleChange}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        className="mt-2 p-2 w-full border border-gray-300 rounded-md"
+                                    />
+                                    {errors.date_limit && <p className="text-red-500 text-sm">{errors.date_limit}</p>}
+                                </div>
+
+                                {/* Select de estado (solo en edición) */}
+                                {action === 'edit' && (
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700">Estado</label>
+                                        <select
+                                            name="status"
+                                            value={formData.status}
+                                            onChange={handleChange}
+                                            className="mt-2 p-2 w-full border border-gray-300 rounded-md"
+                                        >
+                                            <option value="por hacer">Por hacer</option>
+                                            <option value="en progreso">En progreso</option>
+                                            <option value="completada">Completada</option>
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Buscador de usuarios */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700">Buscar Usuarios</label>
+                                    <input
+                                        type="text"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="mt-2 p-2 w-full border border-gray-300 rounded-md"
+                                        placeholder="Escribe para buscar usuarios..."
+                                    />
+                                    <ul className="mt-1 z-10 absolute w-[calc(100%-50px)] bg-white max-h-40 overflow-y-auto border border-gray-300 rounded-md">
+                                        {loading ? (
+                                            <li className="p-2 text-gray-500">Cargando...</li>
+                                        ) : (
+                                            users.map((user) => (
+                                                <li
+                                                    key={user.id}
+                                                    onClick={() => handleUserSelect(user.id)}
+                                                    className="cursor-pointer p-2 hover:bg-gray-100"
+                                                >
+                                                    {user.name}
+                                                </li>
+                                            ))
+                                        )}
+                                    </ul>
+                                </div>
+                                {errors.users && <p className="text-red-500 text-sm">{errors.users}</p>}
                             </div>
                         )}
-
-                        {/* Buscador de usuarios */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700">Buscar Usuarios</label>
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="mt-2 p-2 w-full border border-gray-300 rounded-md"
-                                placeholder="Escribe para buscar usuarios..."
-                            />
-                            <ul className="mt-1 z-10 absolute w-[calc(100%-50px)] bg-white max-h-40 overflow-y-auto border border-gray-300 rounded-md">
-                                {loading ? (
-                                    <li className="p-2 text-gray-500">Cargando...</li>
-                                ) : (
-                                    users.map((user) => (
-                                        <li
-                                            key={user.id}
-                                            onClick={() => handleUserSelect(user.id)}
-                                            className="cursor-pointer p-2 hover:bg-gray-100"
-                                        >
-                                            {user.name}
-                                        </li>
-                                    ))
-                                )}
-                            </ul>
-                        </div>
-                        {errors.users && <p className="text-red-500 text-sm">{errors.users}</p>}
-
                         {/* Usuarios seleccionados */}
                         <div className="mb-4 shadow-lg border bg-slate-300 px-3 py-1">
                             <label className="block text-sm mb-2 font-medium text-gray-700">Usuarios Seleccionados</label>
@@ -272,14 +293,16 @@ const ModalForm: FC<ModalProps> = ({ isOpen, onClose, action, initialData, onSuc
                                 onClick={onClose}
                                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
                             >
-                                Cancelar
+                                {authData && authData.rol == 'admin' ? 'Cancelar' : 'Cerrar' }
                             </button>
-                            <button
-                                type="submit"
-                                className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                            >
-                                {action === 'create' ? 'Registrar' : 'Actualizar'}
-                            </button>
+                            {authData && authData.rol === 'admin' && (
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                                >
+                                    {action === 'create' ? 'Registrar' : 'Actualizar'}
+                                </button>
+                            )}
                         </div>
                     </form>
                 </div>
