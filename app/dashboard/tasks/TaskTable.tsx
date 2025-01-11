@@ -192,7 +192,7 @@ const TaskTable = ({ data, onSuccess }: { data: FormattedTaskTable | null, onSuc
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    <div className={`flex items-center gap-5 px-5 py-2 shadow bg-gray-200/50 rounded-full ${authData.rol === 'admin' ? 'justify-between' : 'justify-center'}`}>
+                                    <div className={`flex items-center gap-5 px-5 py-2 shadow bg-gray-200/50 rounded-full ${authData && authData.rol === 'admin' ? 'justify-between' : 'justify-center'}`}>
                                         {/* Botón de Actualizar */}
                                         {/* {authData && authData.rol === 'admin' && ( */}
 
