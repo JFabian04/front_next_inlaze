@@ -21,14 +21,14 @@ const ListComment: React.FC<ChatProps> = ({ task, onClose }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [newComment, setNewComment] = useState<string>('');
     const [myId, setMyId] = useState<string | null>(null);
-    const [socket, setSocket] = useState<any>(null);
+    // const [socket, setSocket] = useState<any>(null);
 
     useEffect(() => {
         const userId = localStorage.getItem('userId');
         setMyId(userId);
 
         const socket = io('http://localhost:3000');
-        setSocket(socket);
+        // setSocket(socket);
 
         socket.on('connect_error', (err) => {
             console.error('Error de conexión con Socket.IO:', err.message);

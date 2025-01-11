@@ -6,10 +6,11 @@ import { usePathname } from "next/navigation";
 import axiosInstance from "@/app/utils/axios";
 import { useEffect, useState } from "react";
 import { authValidate } from "@/app/services/userService";
+import { authData } from "@/app/types/auth";
 
 const Sidebar: React.FC = () => {
     const router = useRouter();
-    const [authData, setAuthData] = useState<any>();
+    const [authData, setAuthData] = useState<authData>();
 
     useEffect(() => {
         const validateAuth = async () => {
@@ -65,7 +66,7 @@ const Sidebar: React.FC = () => {
                     </svg>
 
                     <label className="capitalize text-white">
-                        {authData?.name?.length > 10 ? `${authData.name.slice(0, 18)}...` : authData?.name || 'Cargando...'}
+                        {authData && authData?.name?.length > 10 ? `${authData.name.slice(0, 18)}...` : authData?.name || 'Cargando...'}
                     </label>
 
                 </div>
