@@ -13,3 +13,12 @@ Iniciar Proyecto
 ```bash
 npm run dev
 ```
+
+CREDENCIALES - INCIAR SESION
+ -- Correo
+ admin@gmail.com
+
+ -- Contraseña
+ 12345Aa
+
+
